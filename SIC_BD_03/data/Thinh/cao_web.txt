@@ -1,5 +1,5 @@
 
-link: https://thanhnien.vn/thi-tot-nghiep-thpt-2025-de-thi-mot-so-mon-qua-kho-vi-sao-185250627230417484.htm
+link: "https://thanhnien.vn/thi-tot-nghiep-thpt-2025-de-thi-mot-so-mon-qua-kho-vi-sao-185250627230417484.htm"
 source_type: "web"
 title:"Bài viết phân tích về đề thi môn tiếng Anh trong Kỳ thi Tốt nghiệp THPT 2025, tập trung vào độ khó và phản ứng từ giáo viên, học sinh, cũng như lý giải ban đầu từ Bộ GD-ĐT"
 content:"Những điểm chính của bài viết bao gồm:
