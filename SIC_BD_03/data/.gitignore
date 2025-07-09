@@ -1,0 +1,13 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# VSCode
+.vscode/
+
+# Mac, Windows
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
