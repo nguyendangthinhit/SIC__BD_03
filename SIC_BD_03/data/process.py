@@ -13,32 +13,52 @@ def parse_post_from_lines(lines: List[str]) -> Dict:
         "time": "",
         "comments": []
     }
-    i = 0
 
+    i = 0
     while i < len(lines):
-        if lines[i].startswith("Link "):
-            post_data["url"] = lines[i][5:].strip()
-        elif lines[i].startswith("Bài viết của"):
-            post_data["poster"] = lines[i][12:].strip()
-        elif lines[i] == "Tác giả":
-            post_data["author"] = lines[i+1].strip()
-            i += 1
-        elif lines[i].startswith("Nội dung bài viết:"):
-            post_data["content"] = lines[i][20:].strip()
-        elif re.match(r"\d+ (giây|phút|giờ|ngày|tuần|tháng|năm)", lines[i]):
-            post_data["time"] = lines[i]
-        elif lines[i] == "Trả lời":
+        line = lines[i]
+
+        # ✅ Nhận link (dù là "Link:", "Link ", hoặc chứa facebook.com)
+        if "facebook.com" in line:
+            match = re.search(r"https?://\S+", line)
+            if match:
+                post_data["url"] = match.group(0)
+
+        elif line.startswith("Bài viết của"):
+            post_data["poster"] = line[12:].strip()
+
+        elif line == "Tác giả":
+            if i + 1 < len(lines):
+                post_data["author"] = lines[i + 1].strip()
+                i += 1
+
+        elif line.startswith("Nội dung bài viết:"):
+            post_data["content"] = line[20:].strip()
+
+        elif re.match(r"\d+ (giây|phút|giờ|ngày|tuần|tháng|năm)", line):
+            post_data["time"] = line
+
+        elif line == "Trả lời":
             break
+
         i += 1
 
+    # Parse comments
     while i < len(lines):
-        if lines[i] in {"Trả lời", "Đã chỉnh sửa", "Fan cứng", "Fan đang lên", "Xem bản dịch"}:
+        line = lines[i]
+
+        # Bỏ các dòng không quan trọng
+        if line in {"Trả lời", "Đã chỉnh sửa", "Fan cứng", "Fan đang lên", "Xem bản dịch"}:
             i += 1
             continue
 
+        if i + 2 >= len(lines):
+            break
+
         user = lines[i]
-        text = lines[i+1] if i+1 < len(lines) else ""
-        time = lines[i+2] if i+2 < len(lines) else ""
+        text = lines[i + 1]
+        time = lines[i + 2]
+
         if not re.match(r"\d+ (giây|phút|giờ|ngày|tuần|tháng|năm)", time):
             i += 1
             continue
@@ -52,11 +72,11 @@ def parse_post_from_lines(lines: List[str]) -> Dict:
 
     return post_data
 
+
 def main():
     if len(sys.argv) != 2:
         print("⚠️ Cách dùng: python process.py <path/tới/file.txt>")
         print("Ví dụ: python process.py thinh/cao.txt")
-        # chỉ cần đặt tên đúng như bên readme tui nói rồi bấm y z là đc
         sys.exit(1)
 
     txt_path = Path(sys.argv[1])
@@ -65,7 +85,6 @@ def main():
         print(f"❌ Không tìm thấy file: {txt_path}")
         sys.exit(1)
 
-    # Lấy tên người cào (thư mục cha)
     user_folder = txt_path.parent.name
     json_path = txt_path.parent / f"{user_folder}_all_posts.json"
 
@@ -85,7 +104,9 @@ def main():
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(all_posts, f, ensure_ascii=False, indent=2)
 
-    print(f"✅ Đã xử lý và thêm vào file {json_path}")
+    print(f"\n✅ Đã thêm bài viết mới vào: {json_path}")
+    print(f"📎 Link bài viết: {parsed_post['url']}")
+    print(f"📝 Số comment: {len(parsed_post['comments'])}")
 
 if __name__ == "__main__":
     main()
