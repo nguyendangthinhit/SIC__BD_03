@@ -37,8 +37,8 @@ def parse_article_from_lines(lines):
 
 def main():
     if len(sys.argv) != 2:
-        print("⚠️ Cách dùng: python process_web_data.py <path/to/file.txt>")
-        print("Ví dụ: python process_web_data.py thinh/cao_web.txt")
+        print("⚠️ Cách dùng: python process_web.py <path/to/file.txt>")
+        print("Ví dụ: python process_web.py thinh/cao_web.txt")
         sys.exit(1)
 
     txt_path = Path(sys.argv[1])
