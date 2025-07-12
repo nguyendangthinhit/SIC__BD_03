@@ -1,6 +1,6 @@
-
-link: "https://thanhnien.vn/thi-tot-nghiep-thpt-2025-de-thi-mot-so-mon-qua-kho-vi-sao-185250627230417484.htm"
-source_type: "web"
+id: education
+link: https://thanhnien.vn/thi-tot-nghiep-thpt-2025-de-thi-mot-so-mon-qua-kho-vi-sao-185250627230417484.htm
+source_type: web
 title:"Bài viết phân tích về đề thi môn tiếng Anh trong Kỳ thi Tốt nghiệp THPT 2025, tập trung vào độ khó và phản ứng từ giáo viên, học sinh, cũng như lý giải ban đầu từ Bộ GD-ĐT"
 content:"Những điểm chính của bài viết bao gồm:
 Độ khó và độ dài của đề thi: Nhiều giáo viên và học sinh nhận định đề thi tiếng Anh quá khó và dài s . Cô Lê Thị Thu Hương cho biết học sinh của cô, dù tự tin về môn tiếng Anh, cũng than khó làm hết đề trong 50 phút s .
@@ -13,3 +13,4 @@ Sự không phù hợp với đối tượng thí sinh: Nhiều ý kiến cho r�
 Tác động và yêu cầu thay đổi: Cách ra đề mới được cho là sẽ kích thích việc học tiếng Anh thực tế và nghiêm túc, rèn kỹ năng đọc hiểu tài liệu và tình huống giao tiếp s . Tuy nhiên, để đổi mới thành công, không chỉ học sinh và giáo viên cần thay đổi mà cơ quan quản lý giáo dục cũng cần chuẩn bị đội ngũ giáo viên chất lượng, điều kiện học tập đồng đều và sách giáo khoa hỗ trợ tốt hơn s .
 Phản ứng từ Bộ GD-ĐT: Đại diện Bộ GD-ĐT cho biết kỳ thi 2025 là kỳ đầu tiên theo chương trình mới, có nhiều điểm đổi mới trong công tác đề thi, đặt vấn đề đánh giá năng lực là hàng đầu s . Cấu trúc và định dạng đề thi cũng thay đổi hoàn toàn s . Về độ khó, Bộ đã tổ chức thử nghiệm diện rộng để đánh giá khả năng đáp ứng của học sinh và điều chỉnh s . Bộ ghi nhận các ý kiến về độ khó cao của môn toán và tiếng Anh, sẽ xem xét và đánh giá lại sau khi hoàn thành công tác chấm thi s s . Thứ trưởng Bộ GD-ĐT nhấn mạnh việc đánh giá độ khó cần đầy đủ thông tin, Bộ tiếp thu ý kiến để làm tốt hơn, đảm bảo quyền lợi thí sinh, và đề thi đánh giá đúng năng lực thật sẽ tốt hơn đề dễ s s .
 Dự kiến phổ điểm: Các chuyên gia dự đoán phổ điểm thi tốt nghiệp THPT 2025 sẽ thấp, môn tiếng Anh khoảng 5-6 điểm, môn toán khoảng 5.5-6 điểm s"
+đây là form chuẩn trong txt để chuyển qua json
