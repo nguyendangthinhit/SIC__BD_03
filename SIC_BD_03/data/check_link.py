@@ -61,9 +61,9 @@ def is_duplicate_link_and_add(new_entry, file_path='links_fb.json'):
 if __name__ == "__main__":
     test_input = {
         "name": "Kaito Kid",
-        "time": "10 tháng 7 lúc 14:17",
-        "content": "Đề thi tốt nghiệp THPT quá khó, Quốc hội yêu cầu báo cáo",
-        "source_url": "https://www.facebook.com/share/p/1C8B5TNDDp/"
+        "time": "27 tháng 6 lúc 09:50 ",
+        "content": "CHÍNH THỨC: Đề thi tốt nghiệp THPT môn Vật Lý năm 2025.",
+        "source_url": "https://www.facebook.com/share/p/19bPCoimAv/"
     }
 
     print(is_duplicate_link_and_add(test_input))  # Kết quả: "oke" hoặc "trùng rồi"
