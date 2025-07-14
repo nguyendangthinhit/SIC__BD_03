@@ -1,3 +1,5 @@
+# file này là file chuyển dữ liệu từ txt sang json để sau này tiện cho việc xử lí và train ai :) sao tôi k viết hoa đc 
+# run thử file để biết cách sử dụng
 import sys
 import json
 import re
