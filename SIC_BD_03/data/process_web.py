@@ -2,7 +2,8 @@ import sys
 import json
 from pathlib import Path
 from datetime import datetime
-
+"vào 1 trang web bất kì (  không yêu cầu mật khẩu ) dùng Gpt hoặc youlearn.ai để bảo nó rút gọn và phân tích dữ liệu"
+"theo định dạng trong file mau_web.txt"
 def parse_article_from_lines(lines):
     data = {
         "id": "",

@@ -77,8 +77,8 @@ def parse_post_from_lines(lines: List[str]) -> Dict:
 
 def main():
     if len(sys.argv) != 2:
-        print("⚠️ Cách dùng: python process.py <path/file.txt>")
-        print("Ví dụ: python process.py thinh/cao.txt")
+        print("⚠️ Cách dùng: python process_fb.py <path/file.txt>")
+        print("Ví dụ: python process_fb.py thinh/cao.txt")
         sys.exit(1)
 
     txt_path = Path(sys.argv[1])
