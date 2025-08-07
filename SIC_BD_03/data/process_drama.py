@@ -1,102 +1,105 @@
-import json
-import re
 import os
-from datetime import datetime
+import json
+import sys
+from transformers import pipeline
 from unidecode import unidecode
+from tqdm import tqdm
 
-# ====== 1. LOAD FILE ======
-base_dir = os.path.dirname(__file__)
-with open(os.path.join(base_dir, "mau.json"), "r", encoding="utf-8") as f:
-    raw_data = json.load(f)
+# ==========================
+# CONFIG
+# ==========================
+candidate_labels = [
+    "Đồng cảm", "Chỉ trích", "Hỏi thông tin", "Cổ vũ", 
+    "Spam", "Ý kiến khác", "Phân tích", "Giải trí", "Tiêu cực", "Tích cực"
+]
+MODEL_NAME = "facebook/bart-large-mnli"
 
+# ==========================
+# LOAD MODEL
+# ==========================
+classifier = pipeline("zero-shot-classification", model=MODEL_NAME)
+print("✅ Model loaded")
 
-with open("links_fb.json", "r", encoding="utf-8") as f:
-    time_data = json.load(f)
+# ==========================
+# PREPROCESSING
+# ==========================
+def is_spam(comment_text):
+    """Loại bỏ comment không ý nghĩa như icon-only, link, quá ngắn,..."""
+    text = comment_text.strip()
+    if len(text) < 5:
+        return True
+    if all(ord(char) < 128 and not char.isalnum() for char in text):
+        return True
+    if "http" in text or "www" in text:
+        return True
+    return False
 
-# ====== 2. TẠO BẢN ĐỒ TỪ LINK → TIME THẬT ======
-time_lookup = {item["source_url"].strip(): item["time"].strip() for item in time_data}
+def classify_comment(text):
+    result = classifier(text, candidate_labels)
+    label = result["labels"][0]
+    score = result["scores"][0]
+    return label, score
 
-# ====== 3. HÀM LỌC COMMENT RÁC ======
-def is_valid_comment(text):
-    if not text or len(text.strip()) < 5:
-        return False
-    if re.fullmatch(r"[^\w\s]+", text.strip()):
-        return False
-    if "http" in text or "facebook.com" in text or "tiktok.com" in text:
-        return False
-    if re.match(r"^[A-ZÀ-Ỵa-zà-ỹ0-9_.\- ]{1,20}[:\-]?$", text.strip()):
-        return False
-    return True
-
-# ====== 4. GOM Ý KIẾN (tạm thời = bằng keyword, chưa dùng ML) ======
-def classify_opinions(comments):
-    opinions = []
-    group_1 = []
-    group_2 = []
-    neutral = []
-
-    for c in comments:
-        text = c["text"].lower()
-        if "thương" in text or "cảm động" in text or "xúc động" in text:
-            group_1.append(c)
-        elif "làm sao" in text or "hướng dẫn" in text or "coi sao" in text:
-            group_2.append(c)
-        else:
-            neutral.append(c)
-
-    if group_1:
-        opinions.append({
-            "label": "Đồng cảm",
-            "description": "Nhiều người bày tỏ cảm xúc thương cảm và xúc động.",
-            "example_comments": group_1[:2]
+# ==========================
+# COMMENT SUMMARY
+# ==========================
+def summarize_comments(comments):
+    summary = {}
+    for comment in comments:
+        text = comment.get("text", "").strip()
+        if not text or is_spam(text):
+            continue
+        label, _ = classify_comment(text)
+        if label not in summary:
+            summary[label] = []
+        summary[label].append(comment)
+    result = []
+    for label, examples in summary.items():
+        result.append({
+            "label": label,
+            "description": f"{len(examples)} comment mang xu hướng '{label}'",
+            "example_comments": examples[:3]  # Chỉ lấy 3 comment đầu minh họa
         })
-    if group_2:
-        opinions.append({
-            "label": "Hỏi cách xem",
-            "description": "Nhiều người quan tâm cách xem lại hình ảnh cũ trên Google Maps.",
-            "example_comments": group_2[:2]
-        })
-    if neutral:
-        opinions.append({
-            "label": "Ý kiến khác",
-            "description": "Một số bình luận khác chưa rõ xu hướng.",
-            "example_comments": neutral[:2]
-        })
-
     return {
-        "num_opinions": len(opinions),
-        "opinions": opinions
+        "num_opinions": len(result),
+        "opinions": result
     }
 
-# ====== 5. XỬ LÝ TOÀN BỘ DỮ LIỆU ======
-processed = []
-for post in raw_data:
-    # 1. Gộp poster + author
-    poster = post.get("poster") or post.get("author")
+# ==========================
+# MAIN
+# ==========================
+def process_file(input_path, output_path):
+    with open(input_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
 
-    # 2. Chuẩn hóa thời gian bài viết
-    real_time = time_lookup.get(post["url"].strip(), post["time"])
+    processed = []
 
-    # 3. Lọc comment
-    raw_comments = post.get("comments", [])
-    valid_comments = [c for c in raw_comments if is_valid_comment(c["text"])]
-
-    # 4. Gom ý kiến dư luận
-    summary = classify_opinions(valid_comments)
-
-    # 5. Đóng gói kết quả
-    processed.append({
-        "url": post["url"].strip(),
-        "poster": poster.strip(),
-        "content": post["content"].strip(),
-        "time": real_time,
-        "comments": {
-            "summary": summary
+    for post in tqdm(data, desc="🔍 Processing posts"):
+        comments = post.get("comments", [])
+        if isinstance(comments, dict) and "summary" in comments:
+            continue  # Skip nếu đã được xử lý
+        post["comments"] = {
+            "summary": summarize_comments(comments)
         }
-    })
+        processed.append(post)
 
-# ====== 6. GHI FILE ======
-with open("test_du_lieu.json", "w", encoding="utf-8") as f:
-    json.dump(processed, f, ensure_ascii=False, indent=2)
+        # Optional: save every 10 posts
+        if len(processed) % 10 == 0:
+            with open(output_path, "w", encoding="utf-8") as fw:
+                json.dump(processed, fw, ensure_ascii=False, indent=2)
 
-print("✅ Đã xử lý xong. File xuất: test_du_lieu.json")
+    with open(output_path, "w", encoding="utf-8") as fw:
+        json.dump(processed, fw, ensure_ascii=False, indent=2)
+    print(f"✅ Done! Processed {len(processed)} posts → {output_path}")
+
+# ==========================
+# RUN FROM COMMAND LINE
+# ==========================
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("❌ Thiếu đối số đầu vào: python process_drama.py <input_file>")
+        sys.exit(1)
+
+    input_path = sys.argv[1]
+    output_path = input_path.replace(".json", "_test_data.json")
+    process_file(input_path, output_path)
