@@ -2,12 +2,12 @@ import os
 import json
 
 # Các thư mục chứa dữ liệu từ từng người
-folders = ['Thinh', 'Huy']
+folders = ['thinh', 'huy']
 merged_data = []
 
 for folder in folders:
     # Lấy ra tên file, ví dụ 'thinh_all_post.json'
-    json_filename = f"{folder}_all_posts.json"
+    json_filename = f"{folder}_all_web_posts.json"
     json_path = os.path.join(folder, json_filename)
 
     # Kiểm tra file tồn tại không
