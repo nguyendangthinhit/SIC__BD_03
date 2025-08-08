@@ -2,7 +2,7 @@ import os
 import json
 
 # Các thư mục chứa dữ liệu từ từng người
-folders = ['thinh', 'huy']
+folders = ['Thinh', 'Huy']
 merged_data = []
 
 for folder in folders:

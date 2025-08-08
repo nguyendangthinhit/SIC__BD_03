@@ -1,105 +1,120 @@
+!pip install -q transformers accelerate tqdm
+import torch
+print(torch.cuda.get_device_name(0))
 import os
 import json
-import sys
-from transformers import pipeline
-from unidecode import unidecode
 from tqdm import tqdm
+from transformers import pipeline
 
-# ==========================
-# CONFIG
-# ==========================
-candidate_labels = [
-    "Đồng cảm", "Chỉ trích", "Hỏi thông tin", "Cổ vũ", 
-    "Spam", "Ý kiến khác", "Phân tích", "Giải trí", "Tiêu cực", "Tích cực"
-]
-MODEL_NAME = "facebook/bart-large-mnli"
+# Zero-shot classifier
+classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+# File đầu vào
+INPUT_FILE = "Thinh_all_posts.json"
+CHECK_FILE = "links_fb.json"
+OUTPUT_FILE = "processed_data.json"
 
-# ==========================
-# LOAD MODEL
-# ==========================
-classifier = pipeline("zero-shot-classification", model=MODEL_NAME)
-print("✅ Model loaded")
 
-# ==========================
-# PREPROCESSING
-# ==========================
-def is_spam(comment_text):
-    """Loại bỏ comment không ý nghĩa như icon-only, link, quá ngắn,..."""
-    text = comment_text.strip()
-    if len(text) < 5:
-        return True
-    if all(ord(char) < 128 and not char.isalnum() for char in text):
-        return True
-    if "http" in text or "www" in text:
-        return True
-    return False
+from datetime import datetime
+import re
+
+def merge_author(poster, author):
+    return author if author else poster
+
+def normalize_time(raw_time, url):
+    # Ví dụ: "28 tháng 6 lúc 11:25" => "2025-06-28T11:25"
+    try:
+        pattern = r"(\d{1,2}) tháng (\d{1,2}) lúc (\d{1,2}):(\d{2})"
+        match = re.search(pattern, raw_time)
+        if match:
+            day, month, hour, minute = map(int, match.groups())
+            dt = datetime(2025, month, day, hour, minute)
+            return dt.isoformat()
+    except Exception as e:
+        print(f"[!] Lỗi parse time: {raw_time} ({url}) → {e}")
+    return raw_time
+
+def is_valid_comment(text):
+    if not text.strip():
+        return False
+    if len(text.strip()) < 3:
+        return False
+    if re.fullmatch(r"[\W_]+", text):  # icon-only
+        return False
+    if re.search(r"https?://", text):
+        return False
+    return True
 
 def classify_comment(text):
-    result = classifier(text, candidate_labels)
-    label = result["labels"][0]
-    score = result["scores"][0]
-    return label, score
+    labels = ["Tích cực", "Tiêu cực", "Trung lập"]
+    result = classifier(text, labels)
+    return result["labels"][0], float(result["scores"][0])
 
-# ==========================
-# COMMENT SUMMARY
-# ==========================
-def summarize_comments(comments):
-    summary = {}
-    for comment in comments:
-        text = comment.get("text", "").strip()
-        if not text or is_spam(text):
-            continue
-        label, _ = classify_comment(text)
-        if label not in summary:
-            summary[label] = []
-        summary[label].append(comment)
-    result = []
-    for label, examples in summary.items():
-        result.append({
-            "label": label,
-            "description": f"{len(examples)} comment mang xu hướng '{label}'",
-            "example_comments": examples[:3]  # Chỉ lấy 3 comment đầu minh họa
-        })
-    return {
-        "num_opinions": len(result),
-        "opinions": result
-    }
+# Load dữ liệu gốc
+with open(INPUT_FILE, 'r', encoding='utf-8') as f:
+    data = json.load(f)
 
-# ==========================
-# MAIN
-# ==========================
-def process_file(input_path, output_path):
-    with open(input_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+# Load check_link
+with open(CHECK_FILE, 'r', encoding='utf-8') as f:
+    raw_check_data = json.load(f)
 
+# Tạo dict check_data
+check_data = {item["source_url"]: item["time"] for item in raw_check_data}
+
+# Nếu OUTPUT_FILE đã tồn tại, load dữ liệu đã xử lý
+if os.path.exists(OUTPUT_FILE):
+    with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
+        processed = json.load(f)
+    print(f"✅ Đã load {len(processed)} bài đã xử lý từ '{OUTPUT_FILE}'.")
+else:
     processed = []
+    print("🔵 Chưa có dữ liệu đã xử lý, bắt đầu mới.")
 
-    for post in tqdm(data, desc="🔍 Processing posts"):
-        comments = post.get("comments", [])
-        if isinstance(comments, dict) and "summary" in comments:
-            continue  # Skip nếu đã được xử lý
-        post["comments"] = {
-            "summary": summarize_comments(comments)
-        }
-        processed.append(post)
+# Tạo set để tránh xử lý trùng
+processed_urls = {post["url"] for post in processed}
+# Bắt đầu xử lý
+total_posts = len(data)
+done_count = len(processed)
 
-        # Optional: save every 10 posts
-        if len(processed) % 10 == 0:
-            with open(output_path, "w", encoding="utf-8") as fw:
-                json.dump(processed, fw, ensure_ascii=False, indent=2)
+progress = tqdm(data, desc=f"Processing posts ({done_count}/{total_posts})")
 
-    with open(output_path, "w", encoding="utf-8") as fw:
-        json.dump(processed, fw, ensure_ascii=False, indent=2)
-    print(f"✅ Done! Processed {len(processed)} posts → {output_path}")
+for post in progress:
+    url = post.get("url", "")
+    if url in processed_urls:
+        progress.set_postfix_str("Đã xử lý, bỏ qua")
+        continue
 
-# ==========================
-# RUN FROM COMMAND LINE
-# ==========================
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("❌ Thiếu đối số đầu vào: python process_drama.py <input_file>")
-        sys.exit(1)
+    # Gộp author
+    post["author"] = merge_author(post.get("poster", ""), post.get("author", ""))
+    post["time"] = normalize_time(post.get("time", ""), url)
 
-    input_path = sys.argv[1]
-    output_path = input_path.replace(".json", "_test_data.json")
-    process_file(input_path, output_path)
+    valid_comments = []
+    opinion_summary = {}
+
+    for cmt in post.get("comments", []):
+        if not is_valid_comment(cmt["text"]):
+            continue
+        label, score = classify_comment(cmt["text"])
+        cmt["label"] = label
+        cmt["score"] = round(score, 3)
+
+        if label not in opinion_summary:
+            opinion_summary[label] = []
+        opinion_summary[label].append(cmt["text"])
+
+        valid_comments.append(cmt)
+
+    post["comments"] = valid_comments
+    post["opinion_summary"] = {k: v[:3] for k, v in opinion_summary.items()}
+
+    processed.append(post)
+    processed_urls.add(url)
+
+    # Save ngay sau mỗi bài
+    with open(OUTPUT_FILE, 'w', encoding='utf-8') as out:
+        json.dump(processed, out, ensure_ascii=False, indent=2)
+
+    done_count += 1
+    progress.set_postfix_str(f"Đã xử lý {done_count}/{total_posts}")
+
+print("✅ Hoàn tất xử lý tất cả bài.")
+
