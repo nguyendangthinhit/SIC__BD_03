@@ -3,7 +3,7 @@ import pandas as pd
 import os
 
 # Load dữ liệu JSON (nếu lưu nhiều file thì bạn có thể dùng vòng lặp duyệt thư mục)
-with open("data_web", "r", encoding="utf-8") as f:
+with open("data_web.json", "r", encoding="utf-8") as f:
     data = json.load(f)
 
 # Nếu là một đối tượng, cho vào list

@@ -29,3 +29,6 @@ with open('data_web.json', 'w', encoding='utf-8') as f_out:
     json.dump(merged_data, f_out, ensure_ascii=False, indent=2)
 
 print(f"✅ Đã gộp xong dữ liệu từ {len(folders)} thư mục vào 'data_web.json'. Số lượng mục: {len(merged_data)}")
+
+
+
