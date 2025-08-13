@@ -321,6 +321,24 @@
     ]
   },
   {
+    "id": "education",
+    "title": "điểm liệt",
+    "source_type": "web",
+    "source_url": "https://example.com/pho-diem-thpt-2025",
+    "date": "2025-07-xx",
+    "content": "\"điểm liệt\"",
+    "highlights": [
+        "Môn Toán: 777 thí sinh",
+        "Môn Ngữ văn: 87 thí sinh",
+        "Môn Tiếng Anh: 28 thí sinh",
+        "Môn Vật lý: 1 thí sinh",
+        "Môn Sinh học: 3 thí sinh",
+        "Môn Lịch sử: 13 thí sinh",
+        "Môn Địa lý: 19 thí sinh",
+        "Môn Tin học, Giáo dục Kinh tế và Pháp luật, Công nghệ: 0 thí sinh"
+    ]
+  },
+  {
     "id": "soical",
     "title": "Thất vọng về Vietnam's Next Top Model: Thanh Hằng gây tranh cãi thái độ, ảnh hậu trường còn đẹp hơn ảnh chính!",
     "source_type": "web",
